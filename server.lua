@@ -8,7 +8,7 @@ TriggerEvent('esx:getSharedObject', function(obj)
         local players = {}
         for k,v in ipairs(ESX.GetPlayers()) do
             local xTarget = ESX.GetPlayerFromId(v)
-            if v~=source and GetPlayerName(v)~=nil and not isBusinessEmployee(dataCache[business]["employees"],xTarget.identifier) then table.insert(players,{name=MySQL.Sync.fetchScalar("SELECT CONCAT(firstname,' ',lastname) FROM users WHERE identifier=@identifier",{["@identifier"]=xTarget.identifier}),sid=v}) end
+            if v~=source and GetPlayerName(v)~=nil and not isBusinessEmployee(dataCache[business]["employees"],xTarget.identifier) then table.insert(players,{name=MySQL.Sync.fetchScalar("SELECT CONCAT(first_name,' ',last_name) FROM users WHERE identifier=@identifier",{["@identifier"]=xTarget.identifier}),sid=v}) end
         end
         if #players<1 then TriggerClientEvent('esx:showNotification', source, _L("no_people_on_server")); return end
         cb(players)
@@ -21,7 +21,7 @@ TriggerEvent('esx:getSharedObject', function(obj)
             idvals["@identifier"..k]=v
         end
         if #idssql<1 then TriggerClientEvent('esx:showNotification', source, _L("employee_list_empty")); return end
-        MySQL.Async.fetchAll("SELECT CONCAT(firstname,' ',lastname) AS name,identifier FROM users WHERE identifier IN ("..table.concat(idssql,",")..")",idvals,function(data)
+        MySQL.Async.fetchAll("SELECT CONCAT(first_name,' ',last_name) AS name,identifier FROM users WHERE identifier IN ("..table.concat(idssql,",")..")",idvals,function(data)
             local employees = {}
             for k,v in ipairs(data) do
                 table.insert(employees,{name=v.name,identifier=v.identifier})
@@ -163,8 +163,8 @@ function reloadServerData()
     local res = MySQL.Sync.fetchAll('SELECT * FROM businesses')
     for key,val in ipairs(res) do
         hasowner = val.owner~=nil and val.owner~=""
-        if hasowner and not namecache[val.owner] then namecache[val.owner]=MySQL.Sync.fetchAll("SELECT firstname,lastname FROM users WHERE identifier = @identifier",{["@identifier"]=val.owner})[1] end
-        if val.owner~=nil then namecache[val.owner] = namecache[val.owner]~=nil and namecache[val.owner] or {firstname="N/A",lastname="N/A"} end
+        if hasowner and not namecache[val.owner] then namecache[val.owner]=MySQL.Sync.fetchAll("SELECT first_name,last_name FROM users WHERE identifier = @identifier",{["@identifier"]=val.owner})[1] end
+        if val.owner~=nil then namecache[val.owner] = namecache[val.owner]~=nil and namecache[val.owner] or {first_name="N/A",last_name="N/A"} end
         dataCache[val.id] = {
             id = val.id,
             name = val.name,
@@ -172,7 +172,7 @@ function reloadServerData()
             description = val.description,
             blipname = (val.blipname~=nil and val.blipname~="") and val.blipname or Config.blip.name,
             owner = val.owner,
-            owner_rp_name = hasowner and namecache[val.owner].firstname.." "..namecache[val.owner].lastname or "None",
+            owner_rp_name = hasowner and namecache[val.owner].first_name.." "..namecache[val.owner].last_name or "None",
             price = val.price,
             earnings = val.earnings,
             position = json.decode(val.position),
